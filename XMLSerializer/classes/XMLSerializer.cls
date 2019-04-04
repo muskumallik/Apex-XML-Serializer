@@ -141,7 +141,7 @@ public class XMLSerializer{
         return System.JSON.serialize(XMLToUnTyped(xmlString));
     }   
     
-	/*
+    /*
 @Description    : resets serialize and deserialize options to default
 */
     public void resetDefaults(){
@@ -159,16 +159,36 @@ public class XMLSerializer{
 */
     private string serialize(Map<string,object> objectMap){
         string xmlString = '';    
+        
         for(string key:objectMap.keySet()){  
             object o = objectMap.get(key);
+            
             if(o == null) { if(this.SerializeNulls)     xmlString += wrap(key,null); }                       
-            else if(o InstanceOf List<object> )         xmlString += serialize((List<object>) o,key);
-            else if(o InstanceOf Map<string,object> )   xmlString += wrap(key,serialize((Map<string,object>) o));
-            else                                        xmlString += wrap(key,string.valueOf(o));                               
+            else if(o InstanceOf List<object> )   xmlString += serialize((List<object>) o,key);
+            else if(o InstanceOf Map<string,object> )xmlString += validateAttributeSerialize((Map<string,object>) o,key);
+            else 	xmlString += wrap(key,string.valueOf(o)); 
         }
         return xmlString;
     }
     
+    private string validateAttributeSerialize(Map<string,object> objectMap,String key){
+        string xmlString = '';     
+        Map<String,Object> attObj = new Map<String,Object>();
+        Map<String,Object> jsonObj = new Map<String,Object>();
+         for(String subString : objectMap.keySet()){
+            if(subString.containsIgnoreCase(Label.JSON_Attribute)){
+                attObj.put(subString.remove(Label.JSON_Attribute),objectMap.get(subString));
+            }else{
+                jsonObj.put(subString,objectMap.get(subString));
+            }
+        }
+        if(attObj.size() > 0){   
+            xmlString += wrap(key,serialize(jsonObj),attObj);
+        }else{
+            xmlString += wrap(key,serialize(objectMap));
+        }
+        return xmlString;
+    }
     /*
 @Description    : Serialize method
 @Parameter      : objectList = List of objects
@@ -178,9 +198,10 @@ public class XMLSerializer{
     private string serialize(List<object> objectList, string key){
         string xmlString = '';      
         for(object o:objectList){    
-            if (o InstanceOf string)				xmlString += wrap(key,string.valueOf(o)); 	
+            if (o InstanceOf string) xmlString += wrap(key,string.valueOf(o));
             else if(o InstanceOf List<object> )  	xmlString += wrap(key,serialize((List<object>) o, key));
-            else                            		xmlString += wrap(key,serialize((Map<string,object>) o));                
+            else               xmlString += validateAttributeSerialize((Map<string,object>) o,key); 
+          
         }     
         return xmlString;
     }
@@ -194,13 +215,19 @@ public class XMLSerializer{
     private string wrap(string key, string value){
         return (string.isNotBlank(value) || serializeNulls) ? ('<' + key + '>' + (string.isBlank(value)?'':value) + '</' + key + '>') : value;
     }
-    
+    private string wrap(string key, string value, Map<String,Object> attributesMap){
+        String xmlAttributes = '';
+        for(String attrString:attributesMap.keyset()){
+            xmlAttributes += attrString+'="'+attributesMap.get(attrString)+'"';
+        }
+        return (string.isNotBlank(value) || serializeNulls) ? ('<' + key +' '+xmlAttributes+ '>' + (string.isBlank(value)?'':value) + '</' + key + '>') : value;
+    }
     /*
-@Description    : deSerializes the xml string into collection of primitive data types.
-@Parameter      : xmlString = xml String to deSerialize
-@Parameter      : deSerializeNodesAsArray  = collection of node names to deserialize as array (Even if xml representation is not an array)
-@Returns        : collection of primitive data types
-*/   
+    @Description    : deSerializes the xml string into collection of primitive data types.
+    @Parameter      : xmlString = xml String to deSerialize
+    @Parameter      : deSerializeNodesAsArray  = collection of node names to deserialize as array (Even if xml representation is not an array)
+    @Returns        : collection of primitive data types
+	*/   
     private  Map<string,object> XMLToUnTyped(string xmlString){
         xmldom xd = new xmldom(xmlString);
         xmldom.Element document = xd.ownerDocument();
@@ -208,20 +235,20 @@ public class XMLSerializer{
     }  
     
     /*
-@Description    : parses an XML node
-@Parameter      : e = xml node (of type xmldom.Element)
-@Returns        : object
-*/
+    @Description    : parses an XML node
+    @Parameter      : e = xml node (of type xmldom.Element)
+    @Returns        : object
+	*/
     private object parseNode(xmldom.Element e){
         if(e.childNodes.size()>0) return complexNodeToMap(e); 
         else  return e.nodeValue;  
     }
     
     /*
-@Description    : Converts a complex xml node to collection of primitive types.
-@Parameter      : e = xml node (of type xmldom.Element)
-@Returns        : Map representation of the node.
-*/
+    @Description    : Converts a complex xml node to collection of primitive types.
+    @Parameter      : e = xml node (of type xmldom.Element)
+    @Returns        : Map representation of the node.
+	*/
     private Map<string,object> complexNodeToMap(xmldom.Element e){       
         Map<string,object> cNodeMap = new Map<string,object>();
         for(xmldom.Element cNode : e.childNodes){                 
@@ -232,14 +259,17 @@ public class XMLSerializer{
             }
             else cNodeMap.put(cNode.nodeName, deSerializeAsArrayNodes.contains(cNode.nodeName.toLowerCase())? new List<object>{parseNode(cNode)} : parseNode(cNode));
         }
+        for(string attribute: e.attributes.keyset()){
+            cNodeMap.put(attribute,e.attributes.get(attribute));
+         }
         return cNodeMap;
     } 
     
     /*
-@Description    : Converts all elements of the set to lower case
-@Parameter      : stringSet = Set of strings to convert to lower case.
-@Returns        : Converted set of strings.
-*/
+    @Description    : Converts all elements of the set to lower case
+    @Parameter      : stringSet = Set of strings to convert to lower case.
+    @Returns        : Converted set of strings.
+	*/
     private Set<string> toLower(Set<string> stringSet){
         Set<string> lowerStringSet = new Set<string>();
         for(string s:stringSet) lowerStringSet.add(s.toLowerCase());
