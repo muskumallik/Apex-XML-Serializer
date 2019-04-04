@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     can parse into DOM trees the XML return objects from Google, Amazon and others.
     large parse trees will consume suprising amounts of memory
  */
-//@Last Updated by  Mallik Reddy   April 2 2019 : Update XMLAttribute to JSON String
 public class XMLDom {
     // Constructor 
     public XMLDom(string str) { parseFromString(str); } 
@@ -59,8 +58,7 @@ public class XMLDom {
                 
                 // add all attributes from this element
                 for (integer i=0; i<reader.getAttributeCount(); i++) { 
-                   //Added XML_Attribute for xml attributes : April 2 2019 : Mallik Reddy
-                    child.attributes.put(Label.XML_Attribute+reader.getAttributeLocalName(i), reader.getAttributeValueAt(i) );
+                    	child.attributes.put(Label.XML_Attribute+reader.getAttributeLocalName(i), reader.getAttributeValueAt(i) );
                 }
                 // add namespace info to each node/element ( for now storing on attributes map)
                 for (integer j=0; j<reader.getNamespaceCount(); j++) { 
@@ -214,11 +212,11 @@ public class XMLDom {
     // some debugging help  
     public void dump() { dump('');}
     public void dump(string pre) { // just current node
-        system.debug( pre + ' ' +this.nodeName + '->' + this.nodeValue + ' ' + this.attributes );  
+        //system.debug( pre + ' ' +this.nodeName + '->' + this.nodeValue + ' ' + this.attributes );  
     }
     public void dumpAll() { dumpAll('');    }
     public void dumpAll(string pre) { // node and all children
-        system.debug( pre + this.nodeName + '->' + this.nodeValue + ' ' + this.attributes );  
+        //system.debug( pre + this.nodeName + '->' + this.nodeValue + ' ' + this.attributes );  
         for (Element c: this.childNodes) { 
             c.dumpAll(pre+'   '); 
         }
