@@ -268,9 +268,6 @@ _Consider the following class, for example:_
 
 It is as simple as that to serialize/de-serialize an apex object to XML and XML to apex object. 
 
-	    
-## Limitations
-* XML attributes are not supported.
 
 ## Areas of interest/Future work
 * Ability to replace XML tag names : Often times we need xml tag names in a format that apex would not allow as variable names like one with special characters or reserved words. It would be useful to be able to replace them in the serialization or deserialization process.
